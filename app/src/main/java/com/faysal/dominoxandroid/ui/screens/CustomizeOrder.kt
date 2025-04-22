@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -70,6 +72,25 @@ fun CustomizePizza() {
         PizzaWidget(
             modifier = Modifier.fillMaxWidth()
         )
+
+        Button(
+            onClick = {},
+            colors = ButtonDefaults.buttonColors(
+                containerColor = PrimaryColor,
+                contentColor = Color.White
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 50.dp)
+                .padding(top = 60.dp)
+        ) {
+            Text(
+                text = "Apply",
+                fontFamily = NUNITO,
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp
+            )
+        }
 
 
     }
