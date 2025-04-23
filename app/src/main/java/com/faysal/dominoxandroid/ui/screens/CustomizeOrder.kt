@@ -15,14 +15,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -34,7 +38,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -45,54 +52,102 @@ import com.faysal.dominoxandroid.ui.theme.PrimaryColor
 
 @Composable
 fun CustomizePizza() {
-    Column(
-        modifier = Modifier.fillMaxSize()
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color = MaterialTheme.colorScheme.surfaceVariant)
     ) {
+
         CustomizePizzaToolbar(
             modifier = Modifier.fillMaxWidth(),
             onBackClick = {},
             onCartClick = {}
         )
 
-        HorizontalDivider(
-            modifier = Modifier.fillMaxWidth(),
-            thickness = 1.dp
-        )
-
-        PizzaSizeWidget(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 32.dp)
-                .padding(horizontal = 80.dp),
-            onSizeSelect = { size ->
-                // TODO: size 
-            }
-        )
-
-        PizzaWidget(
+        Column(
             modifier = Modifier.fillMaxWidth()
-        )
-
-        Button(
-            onClick = {},
-            colors = ButtonDefaults.buttonColors(
-                containerColor = PrimaryColor,
-                contentColor = Color.White
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 50.dp)
-                .padding(top = 60.dp)
+                .align(Alignment.Center)
+                .wrapContentHeight()
         ) {
-            Text(
-                text = "Apply",
-                fontFamily = NUNITO,
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp
+
+            PizzaSizeWidget(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 32.dp)
+                    .padding(horizontal = 80.dp),
+                onSizeSelect = { size ->
+                    // TODO: size
+                }
+            )
+
+            PizzaWidget(
+                modifier = Modifier.fillMaxWidth()
             )
         }
 
 
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .background(
+                    color = MaterialTheme.colorScheme.surface
+                )
+                .padding(
+                    horizontal = 32.dp,
+                    vertical = 16.dp
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+
+            val priceText = buildAnnotatedString {
+                withStyle(
+                    style = SpanStyle(
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 14.sp
+                    )
+                ) {
+                    append("Total : ".uppercase())
+                }
+
+                withStyle(
+                    style = SpanStyle(
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 25.sp
+                    )
+                ) {
+                    append(" $12.30")
+                }
+            }
+
+            Text(
+                text = priceText,
+                fontFamily = NUNITO,
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp
+            )
+
+            Button(
+                onClick = {},
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PrimaryColor,
+                    contentColor = Color.White
+                ),
+                modifier = Modifier
+                    .wrapContentWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text(
+                    text = "Apply",
+                    fontFamily = NUNITO,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 16.sp
+                )
+            }
+        }
     }
 
 
@@ -300,45 +355,56 @@ fun CustomizePizzaToolbar(
     onBackClick: () -> Unit,
     onCartClick: () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(55.dp)
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+
+    Column(
+        modifier = modifier.fillMaxWidth()
     ) {
-        IconButton(
-            onClick = {
-                onBackClick()
-            }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(55.dp)
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_back),
-                contentDescription = null,
-                modifier = Modifier.size(30.dp)
+            IconButton(
+                onClick = {
+                    onBackClick()
+                }
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_back),
+                    contentDescription = null,
+                    modifier = Modifier.size(30.dp)
+                )
+            }
+
+            Text(
+                text = "Customize",
+                fontFamily = NUNITO,
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp
             )
+
+            IconButton(
+                onClick = {
+                    onCartClick()
+                }
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_cart),
+                    contentDescription = null,
+                    modifier = Modifier.size(30.dp)
+                )
+            }
         }
 
-        Text(
-            text = "Customize",
-            fontFamily = NUNITO,
-            fontWeight = FontWeight.Bold,
-            fontSize = 22.sp
+        HorizontalDivider(
+            modifier = Modifier.fillMaxWidth(),
+            thickness = 1.dp
         )
-
-        IconButton(
-            onClick = {
-                onCartClick()
-            }
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_cart),
-                contentDescription = null,
-                modifier = Modifier.size(30.dp)
-            )
-        }
     }
+
 }
 
 @Preview(showBackground = true)
