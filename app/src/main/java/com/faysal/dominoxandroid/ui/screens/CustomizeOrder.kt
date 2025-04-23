@@ -1,5 +1,6 @@
 package com.faysal.dominoxandroid.ui.screens
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,7 +21,8 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -30,25 +32,38 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.faysal.dominoxandroid.R
 import com.faysal.dominoxandroid.ui.models.PIZZA_OPTIONS
 import com.faysal.dominoxandroid.ui.theme.NUNITO
 import com.faysal.dominoxandroid.ui.theme.PrimaryColor
+import com.faysal.dominoxandroid.ui.utility.dashedBorder
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.random.Random
 
 @Composable
 fun CustomizePizza() {
@@ -66,7 +81,8 @@ fun CustomizePizza() {
         )
 
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .align(Alignment.Center)
                 .wrapContentHeight()
         ) {
@@ -74,15 +90,23 @@ fun CustomizePizza() {
             PizzaSizeWidget(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 32.dp)
-                    .padding(horizontal = 80.dp),
-                onSizeSelect = { size ->
-                    // TODO: size
-                }
+                    .padding(horizontal = 40.dp),
+                onSizeSelect = {}
             )
+
+            Spacer(Modifier.size(30.dp))
 
             PizzaWidget(
                 modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(Modifier.size(30.dp))
+
+            PizzaSliceWidget(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 40.dp),
+                onSizeSelect = {}
             )
         }
 
@@ -138,7 +162,7 @@ fun CustomizePizza() {
                 modifier = Modifier
                     .wrapContentWidth()
                     .height(50.dp),
-                shape = RoundedCornerShape(10.dp)
+                shape = CircleShape
             ) {
                 Text(
                     text = "Apply",
@@ -160,22 +184,71 @@ fun PizzaWidget(modifier: Modifier = Modifier) {
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(
-            modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painterResource(R.drawable.img_raw_pizza),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(300.dp)
-            )
+
+        val numberOfSlice = 8
+        val selectedIndices = remember { mutableStateListOf(1,2) }
+
+
+        val toppingBitmaps = selectedIndices.map { index ->
+            ImageBitmap.imageResource(PIZZA_OPTIONS[index].icon)
         }
+
+        val pizzaImage = ImageBitmap.imageResource(R.drawable.img_raw_pizza)
+
+        Canvas(modifier = Modifier.size(300.dp)) {
+            val canvasSize = size.minDimension.toInt()
+            val canvasCenterX = ((size.width - canvasSize) / 2).toInt()
+            val canvasCenterY = ((size.height - canvasSize) / 2).toInt()
+
+            drawIntoCanvas { canvas ->
+                canvas.drawImageRect(
+                    image = pizzaImage,
+                    srcOffset = IntOffset.Zero,
+                    srcSize = IntSize(pizzaImage.width, pizzaImage.height),
+                    dstOffset = IntOffset(canvasCenterX, canvasCenterY),
+                    dstSize = IntSize(canvasSize, canvasSize),
+                    paint = Paint()
+                )
+            }
+
+            val center = Offset(size.width / 2, size.height / 2)
+            val radius = canvasSize / 2f
+            val angleStep = 360f / numberOfSlice
+            val dashPathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
+
+            for (i in 0 until numberOfSlice) {
+                val angle = Math.toRadians((i * angleStep).toDouble())
+                val endX = center.x + radius * cos(angle).toFloat()
+                val endY = center.y + radius * sin(angle).toFloat()
+                drawLine(
+                    color = Color.White,
+                    start = center,
+                    end = Offset(endX, endY),
+                    strokeWidth = 10f,
+                    pathEffect = dashPathEffect
+                )
+            }
+
+            toppingBitmaps.forEach { iconBitmap ->
+                repeat(6) {
+                    val angle = Random.nextFloat() * 360f
+                    val r = Random.nextFloat() * (radius - 30f)
+                    val x = center.x + r * cos(Math.toRadians(angle.toDouble())).toFloat()
+                    val y = center.y + r * sin(Math.toRadians(angle.toDouble())).toFloat()
+                    drawImage(
+                        image = iconBitmap,
+                        topLeft = Offset(x - 12f, y - 12f)
+                    )
+                }
+            }
+        }
+
 
         Row(
             modifier = Modifier
+                .padding(top = 20.dp)
                 .width(120.dp)
-                .height(30.dp)
+                .height(40.dp)
                 .align(Alignment.CenterHorizontally)
                 .border(
                     width = 4.dp,
@@ -194,12 +267,12 @@ fun PizzaWidget(modifier: Modifier = Modifier) {
                     contentDescription = null,
                     tint = PrimaryColor,
                     modifier = Modifier
-                        .size(30.dp)
+                        .size(40.dp)
                 )
             }
 
             Text(
-                text = "1",
+                text = "4",
                 fontFamily = NUNITO,
                 fontWeight = FontWeight.Bold,
                 fontSize = 22.sp,
@@ -215,7 +288,7 @@ fun PizzaWidget(modifier: Modifier = Modifier) {
                     contentDescription = null,
                     tint = PrimaryColor,
                     modifier = Modifier
-                        .size(30.dp)
+                        .size(40.dp)
                 )
             }
 
@@ -246,33 +319,61 @@ fun PizzaWidget(modifier: Modifier = Modifier) {
             }
 
 
+
             LazyRow(
                 modifier = Modifier.weight(0.6f),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(25.dp)
             ) {
-                itemsIndexed(PIZZA_OPTIONS) { _, item ->
+                itemsIndexed(PIZZA_OPTIONS) { index, item ->
                     Box(
                         modifier = Modifier
-                            .size(50.dp)
-                            .clip(CircleShape)
-                            .padding(2.dp)
-                            .border(
-                                width = 3.dp,
-                                color = PrimaryColor,
-                                shape = CircleShape
-                            ),
+                            .size(50.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Image(
-                            painter = painterResource(item.icon),
-                            contentDescription = null,
+                        Box(
                             modifier = Modifier
-                                .size(30.dp)
-                        )
+                                .matchParentSize()
+                                .clip(CircleShape)
+                                .border(3.dp, PrimaryColor, CircleShape)
+                                .clickable {
+                                    if (!selectedIndices.contains(index)) {
+                                        selectedIndices.add(index)
+                                    }
+                                }
+                                .padding(2.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Image(
+                                painter = painterResource(item.icon),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(30.dp)
+                                    .clip(CircleShape)
+                            )
+                        }
+
+                        if (index in selectedIndices) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = null,
+                                tint = Color(0xFFF44336),
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .size(16.dp)
+                                    .background(Color.White, shape = CircleShape)
+                                    .padding(2.dp)
+                                    .clickable {
+                                        selectedIndices.remove(index)
+                                    }
+                            )
+                        }
                     }
                 }
             }
+
+
+
 
 
             Box(
@@ -294,6 +395,60 @@ fun PizzaWidget(modifier: Modifier = Modifier) {
 
 }
 
+
+@Composable
+fun PizzaSliceWidget(
+    modifier: Modifier = Modifier,
+    onSizeSelect: (String) -> Unit
+) {
+
+    val selectedSize by remember {
+        mutableStateOf("8")
+    }
+
+    val sizeList = listOf("4", "6", "8", "12")
+
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.SpaceAround,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        sizeList.forEachIndexed { _, name ->
+            Box(
+                modifier = Modifier
+                    .size(60.dp,40.dp)
+                    .dashedBorder(
+                        strokeWidth = 1.dp,
+                        color = if (name == selectedSize) {
+                            PrimaryColor
+                        } else {
+                            Color.Black
+                        },
+                        cornerRadiusDp = 9.dp
+                    )
+                    .clip(CircleShape)
+                    .clickable {
+                        onSizeSelect(selectedSize)
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = name,
+                    fontFamily = NUNITO,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 25.sp,
+                    color = if (name == selectedSize) {
+                        PrimaryColor
+                    } else {
+                        Color.Black
+                    }
+                )
+            }
+        }
+    }
+}
+
+
 @Composable
 fun PizzaSizeWidget(
     modifier: Modifier = Modifier,
@@ -301,10 +456,10 @@ fun PizzaSizeWidget(
 ) {
 
     val selectedSize by remember {
-        mutableStateOf("S")
+        mutableStateOf("L")
     }
 
-    val sizeList = listOf("S", "M", "L")
+    val sizeList = listOf("S", "M", "L", "XL")
 
     Row(
         modifier = modifier,
