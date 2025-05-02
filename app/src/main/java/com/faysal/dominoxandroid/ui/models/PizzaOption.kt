@@ -11,6 +11,6 @@ val PIZZA_OPTIONS = listOf(
     PizzaOption("Cheese", R.drawable.ic_cheese),
     PizzaOption("Mushroom", R.drawable.ic_mushroom),
     PizzaOption("Pepperoni", R.drawable.ic_pepperoni),
-    PizzaOption("Veggie", R.drawable.ic_veggie),
-    PizzaOption("BBQ Chicken", R.drawable.ic_bbq_chicken)
+    /*PizzaOption("Veggie", R.drawable.ic_veggie),
+    PizzaOption("BBQ Chicken", R.drawable.ic_bbq_chicken)*/
 )

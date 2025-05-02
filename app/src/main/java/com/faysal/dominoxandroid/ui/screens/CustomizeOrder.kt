@@ -31,6 +31,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -45,6 +46,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -61,9 +63,9 @@ import com.faysal.dominoxandroid.ui.models.PIZZA_OPTIONS
 import com.faysal.dominoxandroid.ui.theme.NUNITO
 import com.faysal.dominoxandroid.ui.theme.PrimaryColor
 import com.faysal.dominoxandroid.ui.utility.dashedBorder
+import com.faysal.dominoxandroid.ui.utility.getPizzaLayerImages
 import kotlin.math.cos
 import kotlin.math.sin
-import kotlin.random.Random
 
 @Composable
 fun CustomizePizza() {
@@ -184,65 +186,72 @@ fun PizzaWidget(modifier: Modifier = Modifier) {
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        val pathColor = MaterialTheme.colorScheme.surfaceVariant
 
-        val numberOfSlice = 8
-        val selectedIndices = remember { mutableStateListOf(1,2) }
+        val selectedIndices = remember { mutableStateListOf(0, 1) }
 
-
-        val toppingBitmaps = selectedIndices.map { index ->
-            ImageBitmap.imageResource(PIZZA_OPTIONS[index].icon)
+        val context = LocalContext.current
+        val basePizza = ImageBitmap.imageResource(R.drawable.img_raw_pizza)
+        val pizzaLayers by remember {
+            derivedStateOf {
+                getPizzaLayerImages(context, selectedIndices)
+            }
         }
-
-        val pizzaImage = ImageBitmap.imageResource(R.drawable.img_raw_pizza)
 
         Canvas(modifier = Modifier.size(300.dp)) {
             val canvasSize = size.minDimension.toInt()
-            val canvasCenterX = ((size.width - canvasSize) / 2).toInt()
-            val canvasCenterY = ((size.height - canvasSize) / 2).toInt()
+            val baseSize = (canvasSize * 1.05).toInt()
+            val toppingSize = (canvasSize * 0.9).toInt()
+
+            val baseDstOffset = IntOffset(
+                ((size.width - baseSize) / 2).toInt(),
+                ((size.height - baseSize) / 2).toInt()
+            )
+            val toppingDstOffset = IntOffset(
+                ((size.width - toppingSize) / 2).toInt(),
+                ((size.height - toppingSize) / 2).toInt()
+            )
 
             drawIntoCanvas { canvas ->
                 canvas.drawImageRect(
-                    image = pizzaImage,
+                    image = basePizza,
                     srcOffset = IntOffset.Zero,
-                    srcSize = IntSize(pizzaImage.width, pizzaImage.height),
-                    dstOffset = IntOffset(canvasCenterX, canvasCenterY),
-                    dstSize = IntSize(canvasSize, canvasSize),
+                    srcSize = IntSize(basePizza.width, basePizza.height),
+                    dstOffset = baseDstOffset,
+                    dstSize = IntSize(baseSize, baseSize),
                     paint = Paint()
                 )
+                pizzaLayers.forEach { bitmap ->
+                    val paint = Paint().apply { this.alpha = 0.8f }
+                    canvas.drawImageRect(
+                        image = bitmap,
+                        srcOffset = IntOffset.Zero,
+                        srcSize = IntSize(bitmap.width, bitmap.height),
+                        dstOffset = toppingDstOffset,
+                        dstSize = IntSize(toppingSize, toppingSize),
+                        paint = paint
+                    )
+                }
             }
 
             val center = Offset(size.width / 2, size.height / 2)
             val radius = canvasSize / 2f
-            val angleStep = 360f / numberOfSlice
-            val dashPathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
+            val angleStep = 360f / 8
+            val dashPathEffect = PathEffect.dashPathEffect(floatArrayOf(0f, 0f), 0f)
 
-            for (i in 0 until numberOfSlice) {
+            for (i in 0 until 8) {
                 val angle = Math.toRadians((i * angleStep).toDouble())
                 val endX = center.x + radius * cos(angle).toFloat()
                 val endY = center.y + radius * sin(angle).toFloat()
                 drawLine(
-                    color = Color.White,
+                    color = pathColor,
                     start = center,
                     end = Offset(endX, endY),
-                    strokeWidth = 10f,
+                    strokeWidth = 25f,
                     pathEffect = dashPathEffect
-                )
-            }
-
-            toppingBitmaps.forEach { iconBitmap ->
-                repeat(6) {
-                    val angle = Random.nextFloat() * 360f
-                    val r = Random.nextFloat() * (radius - 30f)
-                    val x = center.x + r * cos(Math.toRadians(angle.toDouble())).toFloat()
-                    val y = center.y + r * sin(Math.toRadians(angle.toDouble())).toFloat()
-                    drawImage(
-                        image = iconBitmap,
-                        topLeft = Offset(x - 12f, y - 12f)
                     )
                 }
             }
-        }
-
 
         Row(
             modifier = Modifier
@@ -266,8 +275,7 @@ fun PizzaWidget(modifier: Modifier = Modifier) {
                     painter = painterResource(R.drawable.ic_remove),
                     contentDescription = null,
                     tint = PrimaryColor,
-                    modifier = Modifier
-                        .size(40.dp)
+                    modifier = Modifier.size(40.dp)
                 )
             }
 
@@ -287,15 +295,12 @@ fun PizzaWidget(modifier: Modifier = Modifier) {
                     painter = painterResource(R.drawable.ic_add),
                     contentDescription = null,
                     tint = PrimaryColor,
-                    modifier = Modifier
-                        .size(40.dp)
+                    modifier = Modifier.size(40.dp)
                 )
             }
-
         }
 
         Spacer(Modifier.height(60.dp))
-
 
         Row(
             modifier = Modifier
@@ -304,7 +309,6 @@ fun PizzaWidget(modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-
             Box(
                 modifier = Modifier.weight(0.2f),
                 contentAlignment = Alignment.Center
@@ -313,12 +317,9 @@ fun PizzaWidget(modifier: Modifier = Modifier) {
                     painter = painterResource(R.drawable.ic_arrow_left),
                     contentDescription = null,
                     tint = Color.Gray,
-                    modifier = Modifier
-                        .size(30.dp)
+                    modifier = Modifier.size(30.dp)
                 )
             }
-
-
 
             LazyRow(
                 modifier = Modifier.weight(0.6f),
@@ -327,8 +328,7 @@ fun PizzaWidget(modifier: Modifier = Modifier) {
             ) {
                 itemsIndexed(PIZZA_OPTIONS) { index, item ->
                     Box(
-                        modifier = Modifier
-                            .size(50.dp),
+                        modifier = Modifier.size(50.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Box(
@@ -372,10 +372,6 @@ fun PizzaWidget(modifier: Modifier = Modifier) {
                 }
             }
 
-
-
-
-
             Box(
                 modifier = Modifier.weight(0.2f),
                 contentAlignment = Alignment.Center
@@ -384,15 +380,11 @@ fun PizzaWidget(modifier: Modifier = Modifier) {
                     painter = painterResource(R.drawable.ic_arrow_right),
                     contentDescription = null,
                     tint = Color.Gray,
-                    modifier = Modifier
-                        .size(30.dp)
+                    modifier = Modifier.size(30.dp)
                 )
             }
         }
-
-
     }
-
 }
 
 
@@ -416,7 +408,7 @@ fun PizzaSliceWidget(
         sizeList.forEachIndexed { _, name ->
             Box(
                 modifier = Modifier
-                    .size(60.dp,40.dp)
+                    .size(60.dp, 40.dp)
                     .dashedBorder(
                         strokeWidth = 1.dp,
                         color = if (name == selectedSize) {
